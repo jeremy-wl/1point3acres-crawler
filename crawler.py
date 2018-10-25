@@ -104,8 +104,8 @@ def parse_thread(tag_common, tag_post_by, check_all_threads=False):
 # 和 直接点搜索按钮返回的结果数量差了几百条, 差的应该就是那些 thread info 为空的帖子
 #
 # 所以我先通过 GET 拿到最近的1000个帖子 (GET 只返回最近1000条), 再通过 POST 爬所有年份的帖子
-def crawl_all_data():
-    crawl_latest(check_all_threads=True)
+def crawl_all_data(proxies=None):
+    crawl_latest(check_all_threads=True, proxies=proxies)
 
     start_year, end_year = 2011, 2029
     offset = 2010
@@ -113,7 +113,7 @@ def crawl_all_data():
         crawl(check_all_threads=True, year=year)
 
 
-def crawl(check_all_threads=False, get_request=False, year=0):
+def crawl(check_all_threads=False, get_request=False, year=0, proxies=None):
     page, pages = 1, 99999
     while page <= int(pages):
         time.sleep(1)  # 降低请求频率
@@ -151,9 +151,9 @@ def crawl(check_all_threads=False, get_request=False, year=0):
                 'searchoption[3109][value]': '0',
                 'searchoption[3109][type]': 'radio',
             }
-            html = requests.post(url, params=params, data=data).text
+            html = requests.post(url, params=params, data=data, proxies=proxies).text
         else:
-            html = requests.post(url, params=params).text
+            html = requests.get(url, params=params, proxies=proxies).text
 
         soup = BeautifulSoup(html, "html.parser")
 
@@ -179,10 +179,14 @@ def crawl(check_all_threads=False, get_request=False, year=0):
         page += 1
 
 
-def crawl_latest(check_all_threads=False):
-    crawl(check_all_threads, get_request=True)
+def crawl_latest(check_all_threads=False, proxies=None):
+    crawl(check_all_threads, get_request=True, proxies=proxies)
 
 
 if __name__ == '__main__':
+    proxies = {
+        "http": "http://192.168.1.102:3128",
+        "https": "https://192.168.1.102:3128",
+    }
     # crawl_all_data()  # crawl all 面经 from scratch
-    crawl_latest()
+    crawl_latest(proxies=proxies)
